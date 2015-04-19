@@ -1,0 +1,90 @@
+#!/usr/bin/env perl
+
+BEGIN {
+  my $user = "ntpwww";
+  my $group = "ntpwww";
+  my $uid = getpwnam($user) || die "User $user not found";
+  my $gid = getgrnam($group) || die "Group $group not found";
+
+  # set groups, clear additional groups
+  $) = "$gid $gid";
+  # set user
+  $> = $uid;
+}
+
+use strict;
+use warnings;
+use FindBin;
+use lib "$FindBin::Bin/lib/";
+
+use ClockInfo::Chrony;
+use ClockInfo::GPS;
+
+use AnyEvent::Socket;
+use AnyEvent::Handle;
+use Text::MicroTemplate::File;
+use JSON;
+use Plack::Request;
+use Plack::Builder;
+use Protocol::WebSocket;
+use Protocol::WebSocket::Handshake::Server;
+
+my $mtf = Text::MicroTemplate::File->new(
+    include_path => ["templates"],
+);
+
+my $app = sub {
+    my $env = shift;
+    my $req = Plack::Request->new($env);
+    my $res = $req->new_response(200);
+
+    if ($req->path eq '/') {
+        my $host = $req->header('Host');
+        $res->content_type('text/html; charset=utf-8');
+        $res->content($mtf->render_file('index.mt', $host, ClockInfo::Chrony::status(), ClockInfo::GPS::status()));
+    } elsif ($req->path =~ m!^/ws!) {
+        unless (    $env->{HTTP_CONNECTION} =~ /\bupgrade\b/i
+                and lc($env->{HTTP_UPGRADE}) eq 'websocket') {
+            print STDERR "connection: ",$env->{HTTP_CONNECTION},"\n";
+            print STDERR "upgrade: ",$env->{HTTP_UPGRADE},"\n";
+            $res->code(400);
+            return $res->finalize;
+        }
+
+        my $handshake = Protocol::WebSocket::Handshake::Server->new_from_psgi($env);
+        $handshake->parse();
+        my $response = $handshake->to_string();
+        print STDERR "Connection from ".$env->{REMOTE_ADDR}.", browser: '".$env->{HTTP_USER_AGENT}."'\n";
+
+        return sub {
+            my $respond = shift;
+
+            my $fh = $env->{'psgix.io'}
+                or return $respond->([ 501, [ "Content-Type", "text/plain" ], [ "This server does not support psgix.io extension" ] ]);
+
+            my $h = AnyEvent::Handle->new( fh => $fh );
+            $h->on_error(sub {
+                warn 'err: ', $_[2];
+                Clients::remove_client($fh);
+                undef $h;
+            });
+
+            $h->push_write($response);
+
+            my $client = { handshake => $handshake, fh => $fh, h => $h };
+
+            Clients::add_client($fh,$client);
+
+            $h->on_read(sub { Clients::dump_read($client,@_); });
+        };
+    } else {
+        $res->code(404);
+    }
+
+    $res->finalize;
+};
+
+builder {
+    enable "Static", path => sub { s!^/static/!! }, root => 'static';
+    $app;
+};

@@ -1,0 +1,8 @@
+#!/bin/sh
+
+while :; do
+  chronyc sources
+  chronyc sourcestats
+  chronyc tracking
+  sleep 16
+done
