@@ -44,12 +44,18 @@ function gps_msg(d, ts) {
     var i;
     var sats = "";
     for(i = 0; i < d.parsed.GPGSV.length; i++) {
+      if(d.parsed.GPGSV[i]["used_in_lock"]) {
+        sats += "<span class=locksat>";
+      }
       sats += 
 	"id = "+d.parsed.GPGSV[i]["id"] + 
 	", elevation = "+d.parsed.GPGSV[i]["elevation"] + 
 	", azimuth = "+d.parsed.GPGSV[i]["azimuth"] + 
-	", snr = "+d.parsed.GPGSV[i]["snr"] + 
-	"<br/>";
+	", snr = "+d.parsed.GPGSV[i]["snr"];
+      if(d.parsed.GPGSV[i]["used_in_lock"]) {
+        sats += "</span>";
+      }
+      sats += "<br/>";
     }
     $("#GPGSV").html(sats);
   }
@@ -127,7 +133,9 @@ $(function(){
 body {
   margin: 1em 2em
 }
-
+.locksat {
+  color: #99cc00;
+}
 </style>
 </head>
 <body>

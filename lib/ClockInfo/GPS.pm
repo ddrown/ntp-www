@@ -28,7 +28,7 @@ sub parse {
   my(@locks) = ("???", "No Lock", "2D Lock", "3D/Full Lock");
 
   my(%parsed);
-  my(@sats);
+  my(%sats);
   while($lines =~ s/^([^\n]*\n)//s) {
     my $line = $1;
     my(@split) = split(/[,*]/,$line);
@@ -39,22 +39,38 @@ sub parse {
 	$parsed{"GPGSA"} = "Lock=?".$split[2];
       }
       $parsed{"GPGSA"} .= " sats=".join(",",@split[3..14]);
+      for(my $i = 3; $i <= 14; $i++) {
+        if($split[$i] > 0) {
+          $sats{$split[$i]}{used_in_lock} = 1;
+        }
+      }
       $parsed{"GPGSA"} =~ s/,,+//;
     } elsif($split[0] eq '$GLGSA') {
       $parsed{"GPGSA"} .= " GLsats=".join(",",@split[3..14]);
       $parsed{"GPGSA"} =~ s/,,+//;
+      for(my $i = 3; $i <= 14; $i++) {
+        if($split[$i] > 0) {
+          $sats{"GL".$split[$i]}{used_in_lock} = 1;
+        }
+      }
     } elsif($split[0] eq '$GPGSV') {
       for(my $i = 4; $i+3 < @split; $i += 4) {
-        push(@sats, {id => $split[$i], elevation => $split[$i+1], azimuth => $split[$i+2], snr => $split[$i+3]});
+        $sats{$split[$i]}{id} = $split[$i];
+        $sats{$split[$i]}{elevation} = $split[$i+1];
+        $sats{$split[$i]}{azimuth} = $split[$i+2];
+        $sats{$split[$i]}{snr} = $split[$i+3];
       }
     } elsif($split[0] eq '$GLGSV') {
       for(my $i = 4; $i+3 < @split; $i += 4) {
-        push(@sats, {id => "GL".$split[$i], elevation => $split[$i+1], azimuth => $split[$i+2], snr => $split[$i+3]});
+        $sats{"GL".$split[$i]}{id} = "GL".$split[$i];
+        $sats{"GL".$split[$i]}{elevation} = $split[$i+1];
+        $sats{"GL".$split[$i]}{azimuth} = $split[$i+2];
+        $sats{"GL".$split[$i]}{snr} = $split[$i+3];
       }
     } 
   }
 
-  @sats = sort { $b->{snr} <=> $a->{snr} } @sats;
+  my @sats = sort { $b->{snr} <=> $a->{snr} } values %sats;
 
   $parsed{"GPGSV"} = \@sats;
 
