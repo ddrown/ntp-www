@@ -10,7 +10,7 @@ sub gpspipe_text {
 
   $gps_buffer .= $fh->rbuf;
   $fh->rbuf = "";
-  if($gps_buffer =~ s/(.*\$PSTI,[^\n]+\n)//s) {
+  if($gps_buffer =~ s/(.*\$GPZDA,[^\n]+\n)//s) {
     my $lines = $1;
     if($lines =~ /\$GPGSV.*/) {
       my(%data) = (type => "gps");
@@ -40,9 +40,16 @@ sub parse {
       }
       $parsed{"GPGSA"} .= " sats=".join(",",@split[3..14]);
       $parsed{"GPGSA"} =~ s/,,+//;
+    } elsif($split[0] eq '$GLGSA') {
+      $parsed{"GPGSA"} .= " GLsats=".join(",",@split[3..14]);
+      $parsed{"GPGSA"} =~ s/,,+//;
     } elsif($split[0] eq '$GPGSV') {
       for(my $i = 4; $i+3 < @split; $i += 4) {
         push(@sats, {id => $split[$i], elevation => $split[$i+1], azimuth => $split[$i+2], snr => $split[$i+3]});
+      }
+    } elsif($split[0] eq '$GLGSV') {
+      for(my $i = 4; $i+3 < @split; $i += 4) {
+        push(@sats, {id => "GL".$split[$i], elevation => $split[$i+1], azimuth => $split[$i+2], snr => $split[$i+3]});
       }
     } 
   }
