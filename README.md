@@ -5,6 +5,7 @@ perl module prereqs:
   2. JSON
   3. twiggy
   4. Protocol::WebSocket
+  5. Text::MicroTemplate::File
 
 Many of these prereqs are in Fedora's and Debian's package system
 
