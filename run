@@ -1,0 +1,3 @@
+#!/bin/sh
+
+twiggy --port 9090 ntp-app
