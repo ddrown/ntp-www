@@ -91,12 +91,12 @@ function show_radar_sats(ctx, sats) {
     ctx.fill();
     if(sats[i].used_in_lock) {
       ctx.stroke();
-      ctx.fillStyle = "rgb(3,15,79)";
+      ctx.fillStyle = "rgb(46,27,250)";
     } else {
       ctx.fillStyle = "rgb(0,0,0)";
     }
 
-    ctx.fillText(sats[i].id,x+5,y+4);
+    ctx.fillText(sats[i].id,x+8,y+5);
   }
 }
 
