@@ -1,4 +1,7 @@
-? my ($host,$chrony,$gps) = @_
+? my ($host,$chrony,$gps) = @_;
+? my $GPS_RADAR_WIDTH = 355;
+? my $GPS_RADAR_HEIGHT = 315;
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML Strict//EN">
 <html>
 <head>
 <title>NTP server status</title>
@@ -36,6 +39,63 @@ function ping_reply(d, ts) {
   $("#ping_reply").text("rtt: "+rtt+"ms, clock difference: "+(ts-recv-(rtt/2))+"ms");
 }
 
+function show_radar(ctx) {
+  ctx.clearRect(0, 0, <?= $GPS_RADAR_WIDTH ?>, <?= $GPS_RADAR_HEIGHT ?>);
+  ctx.strokeStyle = "rgba(0,0,0, 0.3)";
+  ctx.lineWidth = 1;
+  for(var radius = 150; radius >= 10; radius = radius - 46) {
+    ctx.beginPath();
+    ctx.arc(151, 151, radius, 0, Math.PI*2, true);
+    ctx.closePath();
+    ctx.stroke();
+  }
+
+  ctx.beginPath();
+  ctx.moveTo(0,151);
+  ctx.lineTo(302,151);
+  ctx.moveTo(151,0);
+  ctx.lineTo(151,302);
+  ctx.closePath();
+  ctx.stroke();
+
+  ctx.strokeStyle = "rgb(0,0,0)";
+  ctx.font = "20px Georgia";
+  ctx.fillText("N",152,16);
+}
+
+function show_radar_sats(ctx, sats) {
+  ctx.strokeStyle = "rgb(0,0,0)";
+  ctx.lineWidth = 2;
+  for(var i = 0; i < sats.length; i++) {
+    var elevation_rad = (90-sats[i].elevation) * Math.PI / 180; // from horizon
+    var r = Math.sin(elevation_rad) * 150;
+
+    var azimuth_rad = (540 - sats[i].azimuth) % 360 * Math.PI / 180; // clockwise from north
+    var x = Math.sin(azimuth_rad) * r + 151;
+    var y = Math.cos(azimuth_rad) * r + 151;
+
+    ctx.beginPath();
+    ctx.arc(x,y,5,0,Math.PI*2, true);
+    ctx.closePath();
+    if(sats[i].snr < 2) {
+      ctx.fillStyle = "rgb(0,0,0)";
+    } else if(sats[i].snr < 15) {
+      ctx.fillStyle = "rgb(255,0,0)";
+    } else if(sats[i].snr < 30) {
+      ctx.fillStyle = "rgb(255,255,0)";
+    } else {
+      ctx.fillStyle = "rgb(153,255,51)";
+    }
+    ctx.fill();
+    if(sats[i].used_in_lock) {
+      ctx.stroke();
+    }
+
+    ctx.fillStyle = "rgb(0,0,0)";
+    ctx.fillText(sats[i].id,x+5,y+4);
+  }
+}
+
 function gps_msg(d, ts) {
   $('#messages_'+d.type).text(d.text);
   set_date_element("#messages_time_"+d.type, ts);
@@ -58,6 +118,9 @@ function gps_msg(d, ts) {
       sats += "<br/>";
     }
     $("#GPGSV").html(sats);
+    var gps_radar = $('#gps_radar')[0].getContext("2d");
+    show_radar(gps_radar);
+    show_radar_sats(gps_radar,d.parsed.GPGSV);
   }
 }
 
@@ -167,6 +230,7 @@ Last Chrony Update:
 Last GPS Update:
 <span id="messages_time_gps">
 </span>
+<canvas style="display: block" id="gps_radar" width=<?= $GPS_RADAR_WIDTH ?> height=<?= $GPS_RADAR_HEIGHT ?>></canvas>
 <pre id="messages_gps">
 <?= $gps->{"text"} ?>
 </pre>
