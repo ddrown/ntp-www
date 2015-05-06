@@ -26,6 +26,11 @@ sub parse {
   my($lines) = @_;
 
   my(@locks) = ("???", "No Lock", "2D Lock", "3D/Full Lock");
+  my(%special_sats) = (
+    46 => "WAAS (Inmarsat)",
+    48 => "WAAS (Galaxy 15)",
+    51 => "WAAS (Anik F1R)",
+  );
 
   my(%parsed);
   my(%sats);
@@ -55,17 +60,29 @@ sub parse {
       }
     } elsif($split[0] eq '$GPGSV') {
       for(my $i = 4; $i+3 < @split; $i += 4) {
-        $sats{$split[$i]}{id} = $split[$i];
-        $sats{$split[$i]}{elevation} = $split[$i+1];
-        $sats{$split[$i]}{azimuth} = $split[$i+2];
-        $sats{$split[$i]}{snr} = $split[$i+3];
+        my $satname = $split[$i];
+        $sats{$satname}{id} = $satname;
+        $sats{$satname}{elevation} = $split[$i+1];
+        $sats{$satname}{azimuth} = $split[$i+2];
+        $sats{$satname}{snr} = $split[$i+3];
+        if(defined($special_sats{$satname})) {
+          $sats{$satname}{special} = $special_sats{$satname};
+	} else {
+          $sats{$satname}{special} = "";
+	}
       }
     } elsif($split[0] eq '$GLGSV') {
       for(my $i = 4; $i+3 < @split; $i += 4) {
-        $sats{"GL".$split[$i]}{id} = "GL".$split[$i];
-        $sats{"GL".$split[$i]}{elevation} = $split[$i+1];
-        $sats{"GL".$split[$i]}{azimuth} = $split[$i+2];
-        $sats{"GL".$split[$i]}{snr} = $split[$i+3];
+        my $satname = "GL".$split[$i];
+        $sats{$satname}{id} = $satname;
+        $sats{$satname}{elevation} = $split[$i+1];
+        $sats{$satname}{azimuth} = $split[$i+2];
+        $sats{$satname}{snr} = $split[$i+3];
+        if(defined($special_sats{$satname})) {
+          $sats{$satname}{special} = $special_sats{$satname};
+	} else {
+          $sats{$satname}{special} = "";
+	}
       }
     } 
   }

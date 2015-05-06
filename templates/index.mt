@@ -115,6 +115,9 @@ function gps_msg(d, ts) {
       if(d.parsed.GPGSV[i]["used_in_lock"]) {
         sats += "</span>";
       }
+      if(d.parsed.GPGSV[i]["special"].length > 0) {
+        sats += ", special = "+d.parsed.GPGSV[i]["special"];
+      }
       sats += "<br/>";
     }
     $("#GPGSV").html(sats);
