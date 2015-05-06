@@ -59,7 +59,7 @@ function show_radar(ctx) {
   ctx.stroke();
 
   ctx.strokeStyle = "rgb(0,0,0)";
-  ctx.font = "20px Georgia";
+  ctx.font = "15px Georgia";
   ctx.fillText("N",152,16);
 }
 
@@ -79,19 +79,23 @@ function show_radar_sats(ctx, sats) {
     ctx.closePath();
     if(sats[i].snr < 2) {
       ctx.fillStyle = "rgb(0,0,0)";
-    } else if(sats[i].snr < 15) {
+    } else if(sats[i].snr < 10) {
       ctx.fillStyle = "rgb(255,0,0)";
-    } else if(sats[i].snr < 30) {
+    } else if(sats[i].snr < 20) {
       ctx.fillStyle = "rgb(255,255,0)";
+    } else if(sats[i].snr < 30) {
+      ctx.fillStyle = "rgb(196,232,104)";
     } else {
-      ctx.fillStyle = "rgb(153,255,51)";
+      ctx.fillStyle = "rgb(0,214,7)";
     }
     ctx.fill();
     if(sats[i].used_in_lock) {
       ctx.stroke();
+      ctx.fillStyle = "rgb(3,15,79)";
+    } else {
+      ctx.fillStyle = "rgb(0,0,0)";
     }
 
-    ctx.fillStyle = "rgb(0,0,0)";
     ctx.fillText(sats[i].id,x+5,y+4);
   }
 }
@@ -104,21 +108,13 @@ function gps_msg(d, ts) {
     var i;
     var sats = "";
     for(i = 0; i < d.parsed.GPGSV.length; i++) {
-      if(d.parsed.GPGSV[i]["used_in_lock"]) {
-        sats += "<span class=locksat>";
-      }
-      sats += 
-	"id = "+d.parsed.GPGSV[i]["id"] + 
-	", elevation = "+d.parsed.GPGSV[i]["elevation"] + 
-	", azimuth = "+d.parsed.GPGSV[i]["azimuth"] + 
-	", snr = "+d.parsed.GPGSV[i]["snr"];
-      if(d.parsed.GPGSV[i]["used_in_lock"]) {
-        sats += "</span>";
-      }
       if(d.parsed.GPGSV[i]["special"].length > 0) {
-        sats += ", special = "+d.parsed.GPGSV[i]["special"];
+        sats += 
+	  "id = "+d.parsed.GPGSV[i]["id"] + 
+	  ", snr = "+d.parsed.GPGSV[i]["snr"] +
+          ", special = "+d.parsed.GPGSV[i]["special"] +
+          "<br/>";
       }
-      sats += "<br/>";
     }
     $("#GPGSV").html(sats);
     var gps_radar = $('#gps_radar')[0].getContext("2d");

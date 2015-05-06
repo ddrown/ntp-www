@@ -22,15 +22,46 @@ sub gpspipe_text {
   }
 }
 
-sub parse {
-  my($lines) = @_;
+sub gsa {
+  my($split,$sats,$satid_prefix) = @_;
 
-  my(@locks) = ("???", "No Lock", "2D Lock", "3D/Full Lock");
+  for(my $i = 3; $i <= 14; $i++) {
+    if($split->[$i] > 0) {
+      $sats->{$satid_prefix.$split->[$i]}{used_in_lock} = 1;
+    }
+  }
+}
+
+sub gsv {
+  my($split,$sats,$satid_prefix) = @_;
+
   my(%special_sats) = (
     46 => "WAAS (Inmarsat)",
     48 => "WAAS (Galaxy 15)",
     51 => "WAAS (Anik F1R)",
   );
+
+  for(my $i = 4; $i+3 < @$split; $i += 4) {
+    my $satname = $satid_prefix . $split->[$i];
+    $sats->{$satname}{id} = $satname;
+    $sats->{$satname}{id} =~ s/^0//; # 0-padded
+    $sats->{$satname}{elevation} = $split->[$i+1];
+    $sats->{$satname}{elevation} =~ s/^0//; # 0-padded
+    $sats->{$satname}{azimuth} = $split->[$i+2];
+    $sats->{$satname}{azimuth} =~ s/^0//; # 0-padded
+    $sats->{$satname}{snr} = $split->[$i+3];
+    if(defined($special_sats{$satname})) {
+      $sats->{$satname}{special} = $special_sats{$satname};
+    } else {
+      $sats->{$satname}{special} = "";
+    }
+  }
+}
+
+sub parse {
+  my($lines) = @_;
+
+  my(@locks) = ("???", "No Lock", "2D Lock", "3D/Full Lock");
 
   my(%parsed);
   my(%sats);
@@ -43,47 +74,13 @@ sub parse {
       } else {
 	$parsed{"GPGSA"} = "Lock=?".$split[2];
       }
-      $parsed{"GPGSA"} .= " sats=".join(",",@split[3..14]);
-      for(my $i = 3; $i <= 14; $i++) {
-        if($split[$i] > 0) {
-          $sats{$split[$i]}{used_in_lock} = 1;
-        }
-      }
-      $parsed{"GPGSA"} =~ s/,,+//;
+      gsa(\@split, \%sats, "");
     } elsif($split[0] eq '$GLGSA') {
-      $parsed{"GPGSA"} .= " GLsats=".join(",",@split[3..14]);
-      $parsed{"GPGSA"} =~ s/,,+//;
-      for(my $i = 3; $i <= 14; $i++) {
-        if($split[$i] > 0) {
-          $sats{"GL".$split[$i]}{used_in_lock} = 1;
-        }
-      }
+      gsa(\@split, \%sats, "GL");
     } elsif($split[0] eq '$GPGSV') {
-      for(my $i = 4; $i+3 < @split; $i += 4) {
-        my $satname = $split[$i];
-        $sats{$satname}{id} = $satname;
-        $sats{$satname}{elevation} = $split[$i+1];
-        $sats{$satname}{azimuth} = $split[$i+2];
-        $sats{$satname}{snr} = $split[$i+3];
-        if(defined($special_sats{$satname})) {
-          $sats{$satname}{special} = $special_sats{$satname};
-	} else {
-          $sats{$satname}{special} = "";
-	}
-      }
+      gsv(\@split, \%sats, "");
     } elsif($split[0] eq '$GLGSV') {
-      for(my $i = 4; $i+3 < @split; $i += 4) {
-        my $satname = "GL".$split[$i];
-        $sats{$satname}{id} = $satname;
-        $sats{$satname}{elevation} = $split[$i+1];
-        $sats{$satname}{azimuth} = $split[$i+2];
-        $sats{$satname}{snr} = $split[$i+3];
-        if(defined($special_sats{$satname})) {
-          $sats{$satname}{special} = $special_sats{$satname};
-	} else {
-          $sats{$satname}{special} = "";
-	}
-      }
+      gsv(\@split, \%sats, "GL");
     } 
   }
 
