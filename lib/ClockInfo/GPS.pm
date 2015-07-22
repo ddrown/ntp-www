@@ -75,9 +75,10 @@ sub parse {
 	$parsed{"GPGSA"} = "Lock=".@locks[$split[2]];
 	if($split[2] > 1) {
           $last_gps_lock = time();
-	  open(STATUS, ">/dev/shm/lastlock");
+	  open(STATUS, ">/dev/shm/.lastlock");
           print STATUS $last_gps_lock,"\n";
           close(STATUS);
+          rename("/dev/shm/.lastlock","/dev/shm/lastlock");
         }
       } else {
 	$parsed{"GPGSA"} = "Lock=?".$split[2];
