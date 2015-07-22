@@ -5,6 +5,7 @@ use strict;
 my($gps_buffer) = "";
 my($last_gps) = ("[no status yet]");
 my($last_gps_when) = 0;
+my($last_gps_lock) = 0;
 sub gpspipe_text {
   my($fh) = @_;
 
@@ -17,6 +18,7 @@ sub gpspipe_text {
       $data{"text"} = $last_gps = ""; # status text
       $data{"time"} = $last_gps_when = time();
       $data{parsed} = parse($lines);
+      $data{lastlock} = $last_gps_lock;
       Clients::broadcast_status(\%data);
     }
   }
@@ -71,6 +73,12 @@ sub parse {
     if($split[0] eq '$GPGSA') { # $GPGSA,A,1, , , , , , , , , , , , ,3.5,3.4,1.0*30 
       if($split[2] > 0 and $split[2] < @locks) {
 	$parsed{"GPGSA"} = "Lock=".@locks[$split[2]];
+	if($split[2] > 1) {
+          $last_gps_lock = time();
+	  open(STATUS, ">/dev/shm/lastlock");
+          print STATUS $last_gps_lock,"\n";
+          close(STATUS);
+        }
       } else {
 	$parsed{"GPGSA"} = "Lock=?".$split[2];
       }
@@ -92,7 +100,7 @@ sub parse {
 }
 
 sub status {
-  return {text => $last_gps, "time" => $last_gps_when};
+  return {text => $last_gps, "time" => $last_gps_when, "lastlock" => $last_gps_lock};
 }
 
 sub gpspipe_junk { # JSON junk before the actual data

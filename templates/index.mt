@@ -104,6 +104,7 @@ function gps_msg(d, ts) {
   $('#messages_'+d.type).text(d.text);
   set_date_element("#messages_time_"+d.type, ts);
   if(d.type == "gps") {
+    set_date_element("#messages_time_gps_lock", d.lastlock * 1000);
     $("#GPGSA").html(d.parsed.GPGSA);
     var i;
     var sats = "";
@@ -163,6 +164,7 @@ $(function(){
 
     set_date_element("#messages_time_chrony", <?= $chrony->{"time"} ?> * 1000);
     set_date_element("#messages_time_gps", <?= $gps->{"time"} ?> * 1000);
+    set_date_element("#messages_time_gps_lock", <?= $gps->{"lastlock"} ?> * 1000);
 });
 </script>
 <link rel="stylesheet" href="/static/screen.css" />
@@ -229,6 +231,11 @@ Last Chrony Update:
 Last GPS Update:
 <span id="messages_time_gps">
 </span>
+<br>
+Last GPS Lock:
+<span id="messages_time_gps_lock">
+</span>
+<br>
 <canvas style="display: block" id="gps_radar" width=<?= $GPS_RADAR_WIDTH ?> height=<?= $GPS_RADAR_HEIGHT ?>></canvas>
 <pre id="messages_gps">
 <?= $gps->{"text"} ?>
