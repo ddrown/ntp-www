@@ -1,0 +1,21 @@
+#!/usr/bin/perl
+
+use strict;
+
+open(STATUS, "</dev/shm/lastlock");
+my $lastlock = <STATUS>;
+close(STATUS);
+
+my $now = time();
+
+my $minutes_ago = int(($now - $lastlock) / 60);
+
+if($minutes_ago > 15) {
+  $minutes_ago = 15;
+}
+
+for(my $i = 0; $i < 4; $i++) {
+  open(LED_BRIGHTNESS, ">/sys/class/leds/beaglebone:green:usr$i/brightness");
+  print LED_BRIGHTNESS ($minutes_ago & (2**$i)) ? 255 : 0;
+  close(LED_BRIGHTNESS);
+}
