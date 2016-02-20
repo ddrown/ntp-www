@@ -119,10 +119,14 @@ sub parse {
       gsa(\@split, \%sats, "");
     } elsif($split[0] eq '$GLGSA') {
       gsa(\@split, \%sats, "GL");
+    } elsif($split[0] eq '$BDGSA') {
+      gsa(\@split, \%sats, "BD");
     } elsif($split[0] eq '$GPGSV') {
       gsv(\@split, \%sats, "");
     } elsif($split[0] eq '$GLGSV') {
       gsv(\@split, \%sats, "GL");
+    } elsif($split[0] eq '$BDGSV') {
+      gsv(\@split, \%sats, "BD");
     } 
   }
 
