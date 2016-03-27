@@ -16,7 +16,7 @@ sub gpspipe_text {
 
   $gps_buffer .= $fh->rbuf;
   $fh->rbuf = "";
-  if($gps_buffer =~ s/(.*\$GPZDA,[^\n]+\n)//s) {
+  if($gps_buffer =~ s/(.*\$GPVTG,[^\n]+\n)//s) {
     my $lines = $1;
     if($lines =~ /\$GPGSV.*/) {
       my(%data) = (type => "gps");
@@ -127,7 +127,7 @@ sub parse {
       gsv(\@split, \%sats, "GL");
     } elsif($split[0] eq '$BDGSV') {
       gsv(\@split, \%sats, "BD");
-    } 
+    }
   }
 
   my @sats = sort { $b->{snr} <=> $a->{snr} } values %sats;
