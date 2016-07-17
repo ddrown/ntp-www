@@ -9,7 +9,7 @@ my($last_gps_when) = 0;
 my($last_gps_lock) = 0;
 
 my(%snr_histogram);
-my($seconds_with_lock,$last_lock_report) = (0,0);
+my($locked_GPGSA,$unlocked_GPGSA,$last_lock_report) = (0,0,0);
 
 sub gpspipe_text {
   my($fh) = @_;
@@ -76,12 +76,14 @@ sub parse_sat_lock {
   if($split->[2] > 0 and $split->[2] < @locks) {
     $parsed->{"GPGSA"} = "Lock=".@locks[$split->[2]];
     if($split->[2] > 1) {
-      $seconds_with_lock++;
+      $locked_GPGSA++;
       $last_gps_lock = time();
       open(STATUS, ">/dev/shm/.lastlock");
       print STATUS $last_gps_lock,"\n";
       close(STATUS);
       rename("/dev/shm/.lastlock","/dev/shm/lastlock");
+    } else {
+      $unlocked_GPGSA++;
     }
   } else {
     $parsed->{"GPGSA"} = "Lock=?".$split->[2];
@@ -94,9 +96,9 @@ sub write_signal_info {
   } elsif($last_lock_report < time() - 60*60) { # every hour
     $last_lock_report = time();
     open(LOCK_REPORT, ">>/var/log/ntp-app/gps-lock");
-    print LOCK_REPORT POSIX::strftime("%F %R",gmtime($last_lock_report))," $seconds_with_lock\n";
+    print LOCK_REPORT POSIX::strftime("%F %R",gmtime($last_lock_report))," $locked_GPGSA $unlocked_GPGSA\n";
     close(LOCK_REPORT);
-    $seconds_with_lock = 0;
+    $locked_GPGSA = $unlocked_GPGSA = 0;
     open(SNR_HISTOGRAM, ">>/var/log/ntp-app/snr-history");
     my(@snr_strings) = map { "$_:".$snr_histogram{$_}; } sort { $a <=> $b } keys %snr_histogram;
     print SNR_HISTOGRAM POSIX::strftime("%F %R",gmtime($last_lock_report))," ",join(", ",@snr_strings),"\n";
