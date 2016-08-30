@@ -126,7 +126,11 @@ function gps_msg(d, ts) {
 
 $(function(){
     if ("WebSocket" in window) {
-        ws = new WebSocket("ws://<?= $host ?>/ws");
+	var proto = "ws://";
+	if(document.location.protocol == "https:") {
+		proto = "wss://";
+	}
+        ws = new WebSocket(proto+"<?= $host ?>/ws");
     }
     else {
         $("#ws_error").text("This browser doesn't support WebSocket.");
