@@ -40,7 +40,10 @@ function ping_reply(d, ts) {
 }
 
 function show_radar(ctx) {
+  // clear
   ctx.clearRect(0, 0, <?= $GPS_RADAR_WIDTH ?>, <?= $GPS_RADAR_HEIGHT ?>);
+
+  // radar circles
   ctx.strokeStyle = "rgba(0,0,0, 0.3)";
   ctx.lineWidth = 1;
   for(var radius = 150; radius >= 10; radius = radius - 46) {
@@ -50,6 +53,7 @@ function show_radar(ctx) {
     ctx.stroke();
   }
 
+  // radar cross
   ctx.beginPath();
   ctx.moveTo(0,151);
   ctx.lineTo(302,151);
@@ -58,9 +62,21 @@ function show_radar(ctx) {
   ctx.closePath();
   ctx.stroke();
 
+  // SNR line
+  ctx.beginPath();
+  ctx.moveTo(10, 310);
+  ctx.lineTo(345, 310);
+  ctx.closePath();
+  ctx.stroke();
+
+  // radar "N"
   ctx.strokeStyle = "rgb(0,0,0)";
   ctx.font = "15px Georgia";
   ctx.fillText("N",152,16);
+
+  // SNR line "0" and "50"
+  ctx.fillText("0 dB",10,300);
+  ctx.fillText("50 dB",305,300);
 }
 
 function show_radar_sats(ctx, sats) {
@@ -91,12 +107,25 @@ function show_radar_sats(ctx, sats) {
     ctx.fill();
     if(sats[i].used_in_lock) {
       ctx.stroke();
+    }
+
+    var SNR_x = 335 * sats[i].snr/50 + 10;
+    if(SNR_x > 345) {
+      SNR_x = 345;
+    }
+    ctx.beginPath();
+    ctx.arc(SNR_x, 310, 2, 0, Math.PI*2, true);
+    ctx.closePath();
+    ctx.fill();
+
+    if(sats[i].used_in_lock) {
       ctx.fillStyle = "rgb(46,27,250)";
     } else {
       ctx.fillStyle = "rgb(0,0,0)";
     }
 
     ctx.fillText(sats[i].id,x+8,y+5);
+
   }
 }
 
