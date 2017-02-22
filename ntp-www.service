@@ -1,0 +1,12 @@
+[Unit]
+Description=web interface to ntp
+After=network.target chrony.service
+
+[Service]
+WorkingDirectory=/home/ntpwww/ntp-www
+ExecStart=/home/ntpwww/ntp-www/run
+KillMode=control-group
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
