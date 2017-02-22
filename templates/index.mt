@@ -39,8 +39,17 @@ function ping_reply(d, ts) {
   $("#ping_reply").text("rtt: "+rtt+"ms, clock difference: "+(ts-recv-(rtt/2))+"ms");
 }
 
+function SNR_line_x(snr) {
+  var x = 335 * snr/50 + 10;
+  if(x > 345) {
+    x = 345;
+  }
+  return x;
+}
+
 function show_radar(ctx) {
   // clear
+  ctx.fillStyle = "rgb(0,0,0)";
   ctx.clearRect(0, 0, <?= $GPS_RADAR_WIDTH ?>, <?= $GPS_RADAR_HEIGHT ?>);
 
   // radar circles
@@ -74,9 +83,17 @@ function show_radar(ctx) {
   ctx.font = "15px Georgia";
   ctx.fillText("N",152,16);
 
-  // SNR line "0" and "50"
+  // "0 dB" and "50 dB" for SNR line
   ctx.fillText("0 dB",10,300);
   ctx.fillText("50 dB",305,300);
+
+  // 25 dB for SNR line
+  var SNR_25 = SNR_line_x(25);
+  ctx.beginPath();
+  ctx.moveTo(SNR_25, 307);
+  ctx.lineTo(SNR_25, 313);
+  ctx.closePath();
+  ctx.stroke();
 }
 
 function show_radar_sats(ctx, sats) {
@@ -109,10 +126,7 @@ function show_radar_sats(ctx, sats) {
       ctx.stroke();
     }
 
-    var SNR_x = 335 * sats[i].snr/50 + 10;
-    if(SNR_x > 345) {
-      SNR_x = 345;
-    }
+    var SNR_x = SNR_line_x(sats[i].snr);
     ctx.beginPath();
     ctx.arc(SNR_x, 310, 2, 0, Math.PI*2, true);
     ctx.closePath();
