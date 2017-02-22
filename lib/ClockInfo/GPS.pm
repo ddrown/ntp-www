@@ -16,7 +16,7 @@ sub gpspipe_text {
 
   $gps_buffer .= $fh->rbuf;
   $fh->rbuf = "";
-  if($gps_buffer =~ s/(.*\$GPVTG,[^\n]+\n)//s) {
+  if($gps_buffer =~ s/(.*\$GP[ZV][DT][AG],[^\n]+\n)//s) {
     my $lines = $1;
     if($lines =~ /\$GPGSV.*/) {
       my(%data) = (type => "gps");
