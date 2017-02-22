@@ -40,9 +40,9 @@ function ping_reply(d, ts) {
 }
 
 function SNR_line_x(snr) {
-  var x = 335 * snr/50 + 10;
-  if(x > 345) {
-    x = 345;
+  var x = 302 * snr/50;
+  if(x > 302) {
+    x = 302;
   }
   return x;
 }
@@ -73,8 +73,8 @@ function show_radar(ctx) {
 
   // SNR line
   ctx.beginPath();
-  ctx.moveTo(10, 310);
-  ctx.lineTo(345, 310);
+  ctx.moveTo(0, 310);
+  ctx.lineTo(302, 310);
   ctx.closePath();
   ctx.stroke();
 
@@ -85,7 +85,7 @@ function show_radar(ctx) {
 
   // "0 dB" and "50 dB" for SNR line
   ctx.fillText("0 dB",10,300);
-  ctx.fillText("50 dB",305,300);
+  ctx.fillText("50 dB",272,300);
 
   // 25 dB for SNR line
   var SNR_25 = SNR_line_x(25);
