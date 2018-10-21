@@ -7,6 +7,9 @@ perl module prereqs:
   4. Protocol::WebSocket
   5. Text::MicroTemplate::File
 
+Debian packages: twiggy, libanyevent-perl, libjson-perl, libtext-microtemplate-perl
+Debian install from cpan: Protocol::WebSocket
+
 Many of these prereqs are in Fedora's and Debian's package system
 
 To install:
